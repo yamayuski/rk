@@ -1,0 +1,16 @@
+{
+  "name": "rk",
+  "version": "0.1.0",
+  "description": "Rk - Arche",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm exec biome check",
+    "lint:fix": "pnpm exec biome check --write"
+  },
+  "keywords": [],
+  "author": "Masaru Yamagishi <m.yamagishi90+git@gmail.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@biomejs/biome": "2.1.1"
+  }
+}
