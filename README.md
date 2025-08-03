@@ -6,7 +6,7 @@ rk - Arche Original-chain
 
 Using DevContainers with [vscode](https://code.visualstudio.com/) and [vscode
 Remote
-extension](vscode:extension/	ms-vscode-remote.vscode-remote-extensionpack)
+extension](vscode:extension/ms-vscode-remote.vscode-remote-extensionpack)
 
 [![Open this repository in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/yamayuski/rk)
 
