@@ -43,7 +43,7 @@ _install_mkcert() {
         echo "Running in Linux environment"
         sudo apt-get install -y libnss3-tools
         MKCERT_VERSION="v1.4.4"
-        curl -sL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-${_get_arch}.tar.gz" | sudo tar xz -C /usr/local/bin mkcert
+        curl -sL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-$(_get_arch).tar.gz" | sudo tar xzf - -C /usr/local/bin
         sudo chmod +x /usr/local/bin/mkcert
         mkcert -install
         mkcert -key-file=~/.local/rk/key.pem -cert-file=~/.local/rk/cert.pem rk.localhost "*.rk.localhost"
@@ -53,3 +53,5 @@ _install_mkcert() {
         exit 1
     fi
 }
+
+_install_mkcert
