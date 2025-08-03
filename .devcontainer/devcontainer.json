@@ -1,24 +1,23 @@
 {
   "name": "rk DevContainer",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "image": "mirror.gcr.io/node:22-bookworm",
+  "initializeCommand": "bash .devcontainer/initialize-command.sh",
+  "postCreateCommand": "bash rk/.devcontainer/post-create-command.sh",
   "remoteUser": "rk",
   "containerUser": "rk",
   "workspaceFolder": "/workspace",
   "mounts": [
-    "source=~/.local/rk,target=/home/rk/.local/rk,type=bind,consistency=readonly"
+    "source=/opt/rk,target=/opt/rk,type=bind,consistency=readonly"
   ],
   "containerEnv": {
-    "NODE_EXTRA_CA_CERTS": "/home/rk/.local/rk/rootCA.pem"
+    "NODE_EXTRA_CA_CERTS": "/opt/rk/rootCA.pem"
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "upgradePackages": true,
-      "username": "rk"
-    },
-    "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest"
+      "username": "rk",
+      "userUid": "${localEnv:RK_UID-1000}",
+      "userGid": "${localEnv:RK_GID-1000}"
     },
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
