@@ -28,7 +28,7 @@ _find_exe_in_windows() {
 
   which_exe_path=$(which "$exe_name" 2> /dev/null)
   if [ -x "$which_exe_path" ]; then
-    echo $which_exe_path
+    echo "$which_exe_path"
     return 0
   fi
 
