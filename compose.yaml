@@ -1,0 +1,10 @@
+services:
+  rk:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ~/.local/rk:/home/rk/.local/rk:ro
+      - .:/workspace/rk:cached
+    environment:
+      - NODE_EXTRA_CA_CERTS=/home/rk/.local/rk/rootCA.pem

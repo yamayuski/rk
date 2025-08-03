@@ -3,26 +3,53 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
-  ],
+  "remoteUser": "rk",
+  "containerUser": "rk",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "pnpm install",
-  "features": {},
+  "mounts": [
+    "source=~/.local/rk,target=/home/rk/.local/rk,type=bind,consistency=readonly"
+  ],
+  "containerEnv": {
+    "NODE_EXTRA_CA_CERTS": "/home/rk/.local/rk/rootCA.pem"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "upgradePackages": true,
+      "username": "rk"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
-        "biomejs.biome",
         "EditorConfig.EditorConfig",
         "GitHub.copilot",
         "GitHub.copilot-chat",
         "GitHub.vscode-pull-request-github",
         "eamodio.gitlens",
-        "vitest.explorer",
-        "christian-kohler.npm-intellisense",
-        "DavidAnson.vscode-markdownlint"
+        "DavidAnson.vscode-markdownlint",
+        "denoland.vscode-deno"
+      ],
+      "settings": {
+        "deno.enable": true,
+        "deno.lint": true,
+        "deno.codeLens.references": true,
+        "deno.codeLens.test": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "denoland.vscode-deno"
+      }
+    },
+    "jetbrains": {
+      "extensions": [
+        "deno",
+        "org.jetbrains.plugins.github",
+        "com.github.copilot"
       ]
     }
-  },
-  "remoteUser": "node"
+  }
 }
