@@ -17,6 +17,32 @@ _get_arch() {
     esac
 }
 
+_find_exe_in_windows() {
+  local -r exe_name=$1
+  local -r subdir=$2
+
+  if [ -z "$exe_name" ]; then
+    echo "Usage: _find_exe_in_windows "winget.exe" "Users"
+    return 1
+  fi
+
+  which_exe_path=$(which "$exe_name" 2> /dev/null)
+  if [ -x "$which_exe_path" ]; then
+    echo $which_exe_path
+    return 0
+  fi
+
+  for drv in /mnt/*; do
+    if [ -d "$drv/$subdir" ]; then
+      found_path=$(find "$drv/$subdir" -type f -name "$exe_name" 2> /dev/null | head -n 1)
+      if [ -n "$found_path" ]; then
+        echo $found_path
+        return 0
+    fi
+  done
+  return 2
+}
+
 _install_mkcert() {
     set -euo pipefail
 
@@ -36,36 +62,12 @@ _install_mkcert() {
 
     if grep -qi WSL2 /proc/version; then
         echo "Running in WSL2 environment"
-        set +e
-        # Try to find winget.exe dynamically
-        find_winget_exe() {
-            # Try which first
-            local exe_path
-            exe_path=$(which winget.exe 2>/dev/null)
-            if [ -x "$exe_path" ]; then
-                echo "$exe_path"
-                return 0
-            fi
-            # Try common locations
-            local username
-            username=$(cmd.exe /c echo %USERNAME% | tr -d '\r')
-            local candidates=(
-                "/mnt/c/Users/${username}/AppData/Local/Microsoft/WindowsApps/winget.exe"
-                "/mnt/c/Program Files/WindowsApps/Microsoft.DesktopAppInstaller*/winget.exe"
-            )
-            for candidate in "${candidates[@]}"; do
-                if [ -x "$candidate" ]; then
-                    echo "$candidate"
-                    return 0
-                fi
-            done
-            return 1
-        }
-        WINGET_EXE_PATH=$(find_winget_exe)
+        WINGET_EXE_PATH=$(_find_exe_in_windows "winget.exe" "Users")
         if [ -z "$WINGET_EXE_PATH" ]; then
             echo "winget.exe not found. Please install winget and ensure it is in your PATH or a common location."
             exit 1
         fi
+        set +e
         ${WINGET_EXE_PATH} install --id=FiloSottile.mkcert -e
         WINGET_EXIT_CODE=$?
         set -e
@@ -75,9 +77,14 @@ _install_mkcert() {
             echo "winget installation failed"
             exit 1
         fi
-        mkcert.exe -install
-        mkcert.exe -key-file=/opt/rk/key.pem -cert-file=/opt/rk/cert.pem rk.localhost "*.rk.localhost"
-        cp "$(wslpath $(mkcert.exe -CAROOT))/rootCA.pem" /opt/rk/rootCA.pem
+        MKCERT_EXE_PATH=$(_find_exe_in_windows "mkcert.exe" "Users")
+        if [ -z "$MKCERT_EXE_PATH" ]; then
+            echo "mkcert.exe not found. Please install mkcert and ensure it is in your PATH or a common location."
+            exit 1
+        fi
+        ${MKCERT_EXE_PATH} -install
+        ${MKCERT_EXE_PATH} -key-file=/opt/rk/key.pem -cert-file=/opt/rk/cert.pem rk.localhost "*.rk.localhost"
+        cp "$(wslpath $(${MKCERT_EXE_PATH} -CAROOT))/rootCA.pem" /opt/rk/rootCA.pem
     elif [[ "$(uname -s)" == "Darwin" ]]; then
         echo "Running in macOS environment"
         brew install mkcert nss
