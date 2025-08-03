@@ -1,20 +1,21 @@
 {
   "name": "rk DevContainer",
-  "build": {
-    "dockerfile": "./Dockerfile",
-    "context": ".",
-    "args": {
-      "USERNAME": "rk"
-    }
-  },
+  "dockerComposeFile": [
+    "../compose.yaml",
+    "./compose.yaml"
+  ],
+  "service": "workspace",
   "initializeCommand": "bash .devcontainer/initialize-command.sh",
   "postCreateCommand": "bash .devcontainer/post-create-command.sh",
   "remoteUser": "rk",
   "containerUser": "rk",
-  "workspaceFolder": "/workspaces/rk",
+  "workspaceFolder": "/workspaces",
   "containerEnv": {
     "DENO_INSTALL": "/usr/local",
     "DENO_INSTALL_ROOT": "/usr/local/bin"
+  },
+  "remoteEnv": {
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
@@ -33,12 +34,17 @@
     },
     "ghcr.io/devcontainers-extra/features/deno:1": {
       "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "disableIp6tables": true,
+      "installDockerComposeSwitch": false
     }
   },
   "customizations": {
     "vscode": {
       "extensions": [
         "-dbaeumer.vscode-eslint",
+        "-esbenp.prettier-vscode",
         "EditorConfig.EditorConfig",
         "GitHub.copilot",
         "GitHub.copilot-chat",

@@ -1,0 +1,137 @@
+services:
+  workspace:
+    build:
+      context: .devcontainer
+      dockerfile: Dockerfile
+      args:
+        - USERNAME=rk
+        - TZ=${TZ-Asia/Tokyo}
+    command: sleep infinity
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces:cached
+    networks:
+      - default
+
+  claude:
+    build:
+      context: .devcontainer/claude
+      dockerfile: Dockerfile
+      args:
+        - USERNAME=node
+        - TZ=${TZ-Asia/Tokyo}
+    volumes:
+      - type: volume
+        source: claude-code-bashhistory
+        target: /commandhistory
+      - type: volume
+        source: claude-code-config
+        target: /home/node/.claude
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER:-.}
+        target: /workspaces
+    networks:
+      - default
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  gemini:
+    build:
+      context: .devcontainer/gemini
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME:-gemini-cli-dev}
+    hostname: gemini-devcontainer
+
+    volumes:
+      # Workspace mount
+      - ${LOCAL_WORKSPACE_FOLDER:-.}:/workspaces:cached
+
+      # Persistent volumes
+      - gemini-bashhistory:/commandhistory
+      - gemini-config:/home/node/.config/gemini
+      - gemini-npm-cache:/home/node/.npm
+      - gemini-vscode-extensions:/home/node/.vscode-server/extensions
+
+    ports:
+      - "${APP_PORT:-3000}:3000"
+      - "8080:8080"
+      - "8888:8888"
+
+    environment:
+      # Container environment
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - NPM_CONFIG_PREFIX=/home/node/.npm-global
+      - GEMINI_DEVCONTAINER=true
+      - WORKSPACE_FOLDER=/workspaces
+
+      # Security
+      - ENABLE_FIREWALL=${ENABLE_FIREWALL:-true}
+
+      # API Configuration
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+      # Terminal configuration
+      - TERM=xterm-256color
+      - COLORTERM=truecolor
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+
+      # Timezone (uses host timezone)
+      - TZ=${TZ:-UTC}
+
+    # Required capabilities for firewall
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    # Security options
+    security_opt:
+      - seccomp:unconfined  # Required for some development tools
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+  redis:
+    image: redis:alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-gemini-cli}-redis
+    volumes:
+      - gemini-redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  claude-code-bashhistory:
+    driver: local
+  claude-code-config:
+    driver: local
+
+  gemini-bashhistory:
+    driver: local
+  gemini-config:
+    driver: local
+  gemini-npm-cache:
+    driver: local
+  gemini-vscode-extensions:
+    driver: local
+  gemini-redis-data:
+    driver: local
