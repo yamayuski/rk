@@ -81,7 +81,9 @@ _install_mkcert() {
     fi
 }
 
-_install_mkcert
+#_install_mkcert
 
-export RK_UID=$(id -u)
-export RK_GID=$(id -g)
+if ! _is_root; then
+    export RK_UID=$(id -u)
+    export RK_GID=$(id -g)
+fi
