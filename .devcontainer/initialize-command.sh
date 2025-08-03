@@ -37,9 +37,33 @@ _install_mkcert() {
     if grep -qi WSL2 /proc/version; then
         echo "Running in WSL2 environment"
         set +e
-        WINGET_EXE_PATH=$(echo "/mnt/c/Users/$(cmd.exe /c echo %USERNAME% | tr -d '\r')/AppData/Local/Microsoft/WindowsApps/winget.exe")
-        if [ ! -f "$WINGET_EXE_PATH" ]; then
-            echo "winget is not installed. Please install winget first."
+        # Try to find winget.exe dynamically
+        find_winget_exe() {
+            # Try which first
+            local exe_path
+            exe_path=$(which winget.exe 2>/dev/null)
+            if [ -x "$exe_path" ]; then
+                echo "$exe_path"
+                return 0
+            fi
+            # Try common locations
+            local username
+            username=$(cmd.exe /c echo %USERNAME% | tr -d '\r')
+            local candidates=(
+                "/mnt/c/Users/${username}/AppData/Local/Microsoft/WindowsApps/winget.exe"
+                "/mnt/c/Program Files/WindowsApps/Microsoft.DesktopAppInstaller*/winget.exe"
+            )
+            for candidate in "${candidates[@]}"; do
+                if [ -x "$candidate" ]; then
+                    echo "$candidate"
+                    return 0
+                fi
+            done
+            return 1
+        }
+        WINGET_EXE_PATH=$(find_winget_exe)
+        if [ -z "$WINGET_EXE_PATH" ]; then
+            echo "winget.exe not found. Please install winget and ensure it is in your PATH or a common location."
             exit 1
         fi
         ${WINGET_EXE_PATH} install --id=FiloSottile.mkcert -e
