@@ -16,7 +16,13 @@ _get_arch() {
 _install_mkcert() {
     set -euo pipefail
 
-    mkdir -p ~/.local/rk
+    if [ -d /opt/rk ] && [ -f /opt/rk/cert.pem ] && [ -f /opt/rk/key.pem ]; then
+        echo "mkcert is already installed and configured."
+        return 0
+    fi
+
+    sudo mkdir -p /opt/rk
+    sudo chown "$(whoami):$(whoami)" /opt/rk
 
     if grep -qi WSL2 /proc/version; then
         echo "Running in WSL2 environment"
@@ -31,14 +37,14 @@ _install_mkcert() {
             exit 1
         fi
         mkcert.exe -install
-        mkcert.exe -key-file=~/.local/rk/key.pem -cert-file=~/.local/rk/cert.pem rk.localhost "*.rk.localhost"
-        cp "$(mkcert.exe -CAROOT)/rootCA.pem" ~/.local/rk/rootCA.pem
+        mkcert.exe -key-file=/opt/rk/key.pem -cert-file=/opt/rk/cert.pem rk.localhost "*.rk.localhost"
+        cp "$(wslpath $(mkcert.exe -CAROOT))/rootCA.pem" /opt/rk/rootCA.pem
     elif [[ "$(uname -s)" == "Darwin" ]]; then
         echo "Running in macOS environment"
         brew install mkcert nss
         mkcert -install
-        mkcert -key-file=~/.local/rk/key.pem -cert-file=~/.local/rk/cert.pem rk.localhost "*.rk.localhost"
-        cp "$(mkcert -CAROOT)/rootCA.pem" ~/.local/rk/rootCA.pem
+        mkcert -key-file=/opt/rk/key.pem -cert-file=/opt/rk/cert.pem rk.localhost "*.rk.localhost"
+        cp "$(mkcert -CAROOT)/rootCA.pem" /opt/rk/rootCA.pem
     elif [[ "$(uname -s)" == "Linux" ]]; then
         echo "Running in Linux environment"
         sudo apt-get install -y libnss3-tools
@@ -46,8 +52,8 @@ _install_mkcert() {
         curl -sL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-$(_get_arch).tar.gz" | sudo tar xzf - -C /usr/local/bin
         sudo chmod +x /usr/local/bin/mkcert
         mkcert -install
-        mkcert -key-file=~/.local/rk/key.pem -cert-file=~/.local/rk/cert.pem rk.localhost "*.rk.localhost"
-        cp "$(mkcert -CAROOT)/rootCA.pem" ~/.local/rk/rootCA.pem
+        mkcert -key-file=/opt/rk/key.pem -cert-file=/opt/rk/cert.pem rk.localhost "*.rk.localhost"
+        cp "$(mkcert -CAROOT)/rootCA.pem" /opt/rk/rootCA.pem
     else
         echo "Unsupported operating system: $(uname -s)"
         exit 1
@@ -55,3 +61,6 @@ _install_mkcert() {
 }
 
 _install_mkcert
+
+export RK_UID=$(id -u)
+export RK_GID=$(id -g)
