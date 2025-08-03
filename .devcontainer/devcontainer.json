@@ -1,31 +1,50 @@
 {
   "name": "rk DevContainer",
-  "image": "mirror.gcr.io/node:22-bookworm",
+  "dockerComposeFile": [
+    "../compose.yaml",
+    "./compose.yaml"
+  ],
+  "service": "workspace",
   "initializeCommand": "bash .devcontainer/initialize-command.sh",
   "postCreateCommand": "bash .devcontainer/post-create-command.sh",
   "remoteUser": "rk",
   "containerUser": "rk",
-  "workspaceFolder": "/workspaces/rk",
-  "mounts": [
-    "source=/opt/rk,target=/opt/rk,type=bind,consistency=readonly"
-  ],
+  "workspaceFolder": "/workspaces",
   "containerEnv": {
-    "NODE_EXTRA_CA_CERTS": "/opt/rk/rootCA.pem"
+    "DENO_INSTALL": "/usr/local",
+    "DENO_INSTALL_ROOT": "/usr/local/bin"
+  },
+  "remoteEnv": {
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
       "upgradePackages": true,
       "username": "rk",
       "userUid": "${localEnv:RK_UID-1000}",
       "userGid": "${localEnv:RK_GID-1000}"
     },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": "false"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
+    },
+    "ghcr.io/devcontainers-extra/features/deno:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "disableIp6tables": true,
+      "installDockerComposeSwitch": false
     }
   },
   "customizations": {
     "vscode": {
       "extensions": [
+        "-dbaeumer.vscode-eslint",
+        "-esbenp.prettier-vscode",
         "EditorConfig.EditorConfig",
         "GitHub.copilot",
         "GitHub.copilot-chat",
