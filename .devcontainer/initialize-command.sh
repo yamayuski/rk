@@ -22,7 +22,7 @@ _find_exe_in_windows() {
   local -r subdir=$2
 
   if [ -z "$exe_name" ]; then
-    echo "Usage: _find_exe_in_windows "winget.exe" "Users"
+    echo "Usage: _find_exe_in_windows <exe_name> <subdir>"
     return 1
   fi
 
