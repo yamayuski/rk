@@ -36,7 +36,7 @@ _find_exe_in_windows() {
     if [ -d "$drv/$subdir" ]; then
       found_path=$(find "$drv/$subdir" -type f -name "$exe_name" 2> /dev/null | head -n 1)
       if [ -n "$found_path" ]; then
-        echo $found_path
+        echo "$found_path"
         return 0
     fi
   done
