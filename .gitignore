@@ -141,3 +141,11 @@ vite.config.ts.timestamp-*
 # pnpm
 .pnpm-debug.log
 .pnpm-store
+
+# MacOS generated files
+.DS_Store
+.DS_Store?
+
+/coverage
+
+junit.xml
