@@ -5,11 +5,9 @@
     "./compose.yaml"
   ],
   "service": "workspace",
-  "initializeCommand": "bash .devcontainer/initialize-command.sh",
-  "postCreateCommand": "bash .devcontainer/post-create-command.sh",
-  "remoteUser": "rk",
-  "containerUser": "rk",
-  "workspaceFolder": "/workspaces",
+  "remoteUser": "node",
+  "containerUser": "node",
+  "workspaceFolder": "/workspace",
   "containerEnv": {
     "DENO_INSTALL": "/usr/local",
     "DENO_INSTALL_ROOT": "/usr/local/bin"
@@ -21,9 +19,9 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
       "upgradePackages": true,
-      "username": "rk",
-      "userUid": "${localEnv:RK_UID-1000}",
-      "userGid": "${localEnv:RK_GID-1000}"
+      "username": "node",
+      "userUid": "${localEnv:USER_UID-1000}",
+      "userGid": "${localEnv:USER_GID-1000}"
     },
     "ghcr.io/devcontainers/features/git:1": {
       "version": "latest",
@@ -35,8 +33,7 @@
     "ghcr.io/devcontainers-extra/features/deno:1": {
       "version": "latest"
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "disableIp6tables": true,
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "installDockerComposeSwitch": false
     }
   },
