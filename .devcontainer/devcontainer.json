@@ -5,13 +5,9 @@
     "./compose.yaml"
   ],
   "service": "workspace",
-  "remoteUser": "node",
-  "containerUser": "node",
+  "remoteUser": "deno",
+  "containerUser": "deno",
   "workspaceFolder": "/workspace",
-  "containerEnv": {
-    "DENO_INSTALL": "/usr/local",
-    "DENO_INSTALL_ROOT": "/usr/local/bin"
-  },
   "remoteEnv": {
     "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
@@ -19,7 +15,7 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
       "upgradePackages": true,
-      "username": "node",
+      "username": "deno",
       "userUid": "${localEnv:USER_UID-1000}",
       "userGid": "${localEnv:USER_GID-1000}"
     },
@@ -30,10 +26,8 @@
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
     },
-    "ghcr.io/devcontainers-extra/features/deno:1": {
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+    "./docker-outside-of-docker": {
+      "moby": false,
       "installDockerComposeSwitch": false
     }
   },

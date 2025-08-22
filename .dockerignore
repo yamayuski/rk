@@ -3,4 +3,10 @@
 dist/
 coverage/
 .gitattributes
+.gitignore
 LICENSE
+Dockerfile
+README.md
+_build/
+node_modules/
+*.log
