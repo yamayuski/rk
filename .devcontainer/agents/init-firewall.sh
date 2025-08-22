@@ -2,6 +2,32 @@
 set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+if [ "$EUID" -ne 0 ]; then
+    echo -e "${RED}This script must be run as root${NC}"
+    exit 1
+fi
+
+# Function to add allowed domain
+add_allowed_domain() {
+    local domain=$1
+    local ip_list=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9.]+$' || echo "")
+
+    if [ -n "$ip_list" ]; then
+        for ip in $ip_list; do
+            ipset -! add allowed_ips "$ip" 2>/dev/null || true
+        done
+        echo -e "${GREEN}✓${NC} Added $domain"
+    else
+        echo -e "${YELLOW}⚠${NC} Could not resolve $domain"
+    fi
+}
+
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
@@ -39,6 +65,7 @@ iptables -A OUTPUT -o lo -j ACCEPT
 
 # Create ipset with CIDR support
 ipset create allowed-domains hash:net
+ipset create allowed_ips hash:ip
 
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
@@ -63,32 +90,50 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.anthropic.com" \
-    "deno.land" \
-    "jsr.io" \
-    "npm.jsr.io" \
-    "esm.sh" \
-    "statsig.com"; do
-    echo "Resolving $domain..."
-    ips=$(dig +short A "$domain")
-    if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
-        exit 1
-    fi
+# Allow domains
+ALLOWED_DOMAINS=(
+    "1.0.0.1"
+    "1.1.1.1"
+    "8.8.4.4"
+    "8.8.8.8"
+    "accounts.google.com"
+    "aistudio.google.com"
+    "api.anthropic.com"
+    "api.github.com"
+    "archive.ubuntu.com"
+    "cdn.jsdelivr.net"
+    "cdnjs.cloudflare.com"
+    "collector.github.com"
+    "content.googleapis.com"
+    "deb.debian.org"
+    "deno.land"
+    "dns.google"
+    "esm.sh"
+    "generativelanguage.googleapis.com"
+    "ghcr.io"
+    "github.com"
+    "github.githubassets.com"
+    "jsr.io"
+    "nodejs.org"
+    "npm.jsr.io"
+    "npm.pkg.github.com"
+    "oauth2.googleapis.com"
+    "pkg-containers.githubusercontent.com"
+    "raw.githubusercontent.com"
+    "registry.npmjs.org"
+    "registry.npmmirror.com"
+    "security.debian.org"
+    "security.ubuntu.com"
+    "sentry.io"
+    "statsig.anthropic.com"
+    "statsig.com"
+    "storage.googleapis.com"
+    "unpkg.com"
+    "www.googleapis.com"
+)
 
-    while read -r ip; do
-        if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            echo "ERROR: Invalid IP from DNS for $domain: $ip"
-            exit 1
-        fi
-        echo "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
-    done < <(echo "$ips")
+for domain in "${ALLOWED_DOMAINS[@]}"; do
+    add_allowed_domain "$domain"
 done
 
 # Get host IP from default route
@@ -116,6 +161,8 @@ iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # Then allow only specific outbound traffic to allowed domains
 iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
+# Allow connections to allowed IPs
+iptables -A OUTPUT -m set --match-set allowed_ips dst -j ACCEPT
 
 echo "Firewall configuration complete"
 echo "Verifying firewall rules..."

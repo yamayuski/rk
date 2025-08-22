@@ -1,24 +1,49 @@
 services:
   workspace:
+    image: rk/workspace:latest
+    pull_policy: build
     build:
       context: .devcontainer
       dockerfile: Dockerfile
       args:
-        - USERNAME=rk
-        - TZ=${TZ-Asia/Tokyo}
+        USERNAME: ${USERNAME:-deno}
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+        TZ: ${TZ:-UTC}
+        LANGUAGE: ${LANGUAGE:-en}
+        COUNTRY: ${COUNTRY:-US}
+        ENCODING: ${ENCODING:-UTF-8}
+        LOCALE: ${LOCALE:-"en_US.UTF-8 UTF-8"}
     command: sleep infinity
     volumes:
-      - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces:cached
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER:-.}
+        target: /workspace
+      - type: volume
+        source: workspace-bashhistory
+        target: /commandhistory
+    depends_on:
+      - claude
+      - gemini
     networks:
       - default
 
   claude:
+    image: rk/agents:latest
+    pull_policy: build
     build:
-      context: .devcontainer/claude
+      context: .devcontainer/agents
       dockerfile: Dockerfile
       args:
-        - USERNAME=node
-        - TZ=${TZ-Asia/Tokyo}
+        NODE_VERSION: ${NODE_VERSION:-24}
+        USERNAME: ${USERNAME:-node}
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+        TZ: ${TZ:-UTC}
+        LANGUAGE: ${LANGUAGE:-en}
+        COUNTRY: ${COUNTRY:-US}
+        ENCODING: ${ENCODING:-UTF-8}
+        LOCALE: ${LOCALE:-"en_US.UTF-8 UTF-8"}
     volumes:
       - type: volume
         source: claude-code-bashhistory
@@ -28,98 +53,62 @@ services:
         target: /home/node/.claude
       - type: bind
         source: ${LOCAL_WORKSPACE_FOLDER:-.}
-        target: /workspaces
+        target: /workspace
+    environment:
+      - WORKSPACE_FOLDER=/workspace
     networks:
       - default
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    security_opt:
+      - seccomp:unconfined
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "--version"]
 
   gemini:
-    build:
-      context: .devcontainer/gemini
-      dockerfile: Dockerfile
-    container_name: ${CONTAINER_NAME:-gemini-cli-dev}
-    hostname: gemini-devcontainer
-
+    image: rk/agents:latest
+    pull_policy: never
     volumes:
-      # Workspace mount
-      - ${LOCAL_WORKSPACE_FOLDER:-.}:/workspaces:cached
-
-      # Persistent volumes
-      - gemini-bashhistory:/commandhistory
-      - gemini-config:/home/node/.config/gemini
-      - gemini-npm-cache:/home/node/.npm
-      - gemini-vscode-extensions:/home/node/.vscode-server/extensions
-
-    ports:
-      - "${APP_PORT:-3000}:3000"
-      - "8080:8080"
-      - "8888:8888"
-
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER:-.}
+        target: /workspace
+      - type: volume
+        source: gemini-bashhistory
+        target: /commandhistory
+      - type: volume
+        source: gemini-config
+        target: /home/node/.gemini
     environment:
-      # Container environment
-      - NODE_ENV=development
-      - NODE_OPTIONS=--max-old-space-size=4096
-      - NPM_CONFIG_PREFIX=/home/node/.npm-global
-      - GEMINI_DEVCONTAINER=true
-      - WORKSPACE_FOLDER=/workspaces
-
-      # Security
-      - ENABLE_FIREWALL=${ENABLE_FIREWALL:-true}
-
-      # API Configuration
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-
-      # Terminal configuration
-      - TERM=xterm-256color
-      - COLORTERM=truecolor
-      - LANG=en_US.UTF-8
-      - LC_ALL=en_US.UTF-8
-
-      # Timezone (uses host timezone)
-      - TZ=${TZ:-UTC}
-
-    # Required capabilities for firewall
+      - WORKSPACE_FOLDER=/workspace
+    networks:
+      - default
     cap_add:
       - NET_ADMIN
       - NET_RAW
-
-    # Security options
     security_opt:
-      - seccomp:unconfined  # Required for some development tools
-
-    # Keep container running
+      - seccomp:unconfined
     stdin_open: true
     tty: true
-
-    # Restart policy
     restart: unless-stopped
-
-    # Health check
     healthcheck:
       test: ["CMD", "node", "--version"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 1G
 
   redis:
-    image: redis:alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-gemini-cli}-redis
+    image: mirror.gcr.io/valkey/valkey:9.0-alpine
     volumes:
       - gemini-redis-data:/data
     restart: unless-stopped
+    environment:
+      VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
 
 volumes:
+  workspace-bashhistory:
+    driver: local
+
   claude-code-bashhistory:
     driver: local
   claude-code-config:
@@ -128,10 +117,6 @@ volumes:
   gemini-bashhistory:
     driver: local
   gemini-config:
-    driver: local
-  gemini-npm-cache:
-    driver: local
-  gemini-vscode-extensions:
     driver: local
   gemini-redis-data:
     driver: local

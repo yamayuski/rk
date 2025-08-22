@@ -1,16 +1,22 @@
-FROM mirror.gcr.io/denoland/deno:2.4.3
+FROM --platform=${BUILDPLATFORM} mirror.gcr.io/denoland/deno:latest AS builder
 
-ARG TZ
+ARG TZ=UTC
 ENV TZ=${TZ}
 
 WORKDIR /app
-
 USER deno
-
-COPY deps.ts .
-RUN deno install --entrypoint deps.ts
-
 COPY . .
 RUN deno cache main.ts
+
+
+
+FROM --platform=${BUILDPLATFORM} mirror.gcr.io/denoland/deno:latest
+
+ARG TZ=UTC
+ENV TZ=${TZ}
+
+WORKDIR /app
+USER deno
+COPY --from=builder /app .
 
 CMD [ "run", "--allow-net", "main.ts" ]
