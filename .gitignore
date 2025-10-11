@@ -44,6 +44,11 @@ web_modules/
 .DS_Store
 .DS_Store?
 
+# WSL
+*Zone.Identifier
+
 junit.xml
 
 dist/
+
+*.pem
