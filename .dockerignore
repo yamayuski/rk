@@ -1,6 +1,7 @@
 .git/
 .github/
 dist/
+docs/
 coverage/
 .gitattributes
 .gitignore

@@ -8,3 +8,5 @@
 - MUST use `@biomejs/biome` for code formatting and linting
 - MUST use `vitest` for testing
 - TypeScript runtimes MAY contain node.js, bun, or deno
+- markdown ファイルを修正した場合は最後に必ず markdownlint を実行してください(`npx markdownlint-cli2 "**/*.md"`)
+- markdown ファイルは GitHub-flavored markdown に従ってください
