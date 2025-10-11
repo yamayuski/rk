@@ -2,6 +2,12 @@
 
 rk - Arche Original-chain
 
+## Goal
+
+A project aimed at protecting original creators' rights and improving content reliability by applying digital signatures to Human-generated Content (text, images, audio, video, 3D models, software, etc.) worldwide and expressing the relationship between originals and copies. It also distinguishes from AI-generated Content and enforces learning restrictions.
+
+A self-contained signature specification that does not depend on infrastructure held by specific companies or organizations. Provides lightweight implementation that can sign and verify with just a browser / CLI.
+
 ## Installation
 
 Using DevContainers with [vscode](https://code.visualstudio.com/) and
